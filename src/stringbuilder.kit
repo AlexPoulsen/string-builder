@@ -1,0 +1,22 @@
+/**
+ * An StringBuilder implementation in kit.
+ * @author Tyler Bezera
+ * @author Alex Poulsen
+ */
+
+struct StringBuilder {
+    private var chars: CString;
+    private var length: Int;
+
+
+    public static function new() {
+        return struct Self {
+            chars: "",
+            length: 10
+        };
+    }
+}
+
+function main() {
+    var builder = StringBuilder.new();
+}
