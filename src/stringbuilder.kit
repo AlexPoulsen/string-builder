@@ -7,6 +7,8 @@
 import xs_Rounding;
 include "math.h";
 
+var _minSizePreDoubling: Int = 10;
+
 /**
  * Not necessarily needed for the StringBuilder, but it's a useful function that works well for appending strings in a situation where a StringBuilder is not necessary
  */
@@ -33,12 +35,15 @@ struct StringBuilder {
     }
 
 
-    public static function newFromString(initialize: CString): StringBuilder {
-        var initSize: Int = 20;
+    public static function newFromString(initialize: CString, size: Int = 0): StringBuilder {
+        var initSize: Int = _minSizePreDoubling;
         if initialize.length > initSize {
             initSize = initialize.length;
         }
         initSize *= 2;
+        if size > initSize {
+            initSize = size;
+        }
         var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
         strcpy(initChars, initialize);
         return struct Self {
@@ -49,16 +54,51 @@ struct StringBuilder {
     }
 
 
-    public static function newFromInt(initialize: Int): StringBuilder {
+    public static function newFromCharPtr(initialize: Ptr[Char], size: Int): StringBuilder {
+        var initSize: Int = _minSizePreDoubling;
+        if size > initSize {
+            initSize = size;
+        }
+        initSize *= 2;
+        var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
+        strcpy(initChars, initialize);
+        return struct Self {
+            chars: initChars,
+            length: size,
+            allocated: initSize
+        };
+    }
+
+
+    public static function newFromCharArray(initialize: CArray[Char], size: Int = 0): StringBuilder {
+        var initSize: Int = _minSizePreDoubling;
+        if initialize.length > initSize {
+            initSize = initialize.length;
+        }
+        initSize *= 2;
+        if size > initSize {
+            initSize = size;
+        }
+        var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
+        strcpy(initChars, initialize);
+        return struct Self {
+            chars: initChars,
+            length: initialize.length,
+            allocated: initSize
+        };
+    }
+
+
+    public static function newFromInt(initialize: Int, size: Int = 0): StringBuilder {
         var numSize: Int = xs_CeilToInt(log10(initialize: Float64));  // for numbers like 1000000000, it will report the length as one less than it is. this is fixed by multiplying the initSize by 2.
-        // printf("numSize: %d\n", numSize);
-        // printf("log10: %f\n", log10(initialize: Float64));
-        // printf("initialize: %d\n", initialize);
-        var initSize: Int = 20;
+        var initSize: Int = _minSizePreDoubling;
         if numSize > initSize {
             initSize = numSize;
         }
         initSize *= 2;
+        if size > initSize {
+            initSize = size;
+        }
         var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
         sprintf(initChars,"%d", initialize);
         return struct Self {
@@ -137,7 +177,12 @@ struct StringBuilder {
 
 function main(): Void {
     // var builder = StringBuilder.newFromString("hello world!");
-    var builder = StringBuilder.newFromInt(479235634);
+    // var builder = StringBuilder.newFromInt(479235634);
+    var cp: Ptr[Char] = "abc 123";
+    var ca: CArray[Char, 7];
+    strcpy(ca, "lol hi");
+    // var builder = StringBuilder.newFromCharPtr(cp, 7);
+    var builder = StringBuilder.newFromCharArray(ca);
     builder.appendString(" + ");
     builder.appendInt(63462182);
     builder.appendString(" fooooooooooooooooooooooooooo");
