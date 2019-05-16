@@ -4,19 +4,109 @@
  * @author Alex Poulsen
  */
 
+/**
+ * Not necessarily needed for the StringBuilder, but it's a useful function that works well for appending strings in a situation where a StringBuilder is not necessary
+ */
+function strAdd(one: CString, two: CString) {
+    var out = malloc(one.length + two.length + 1);
+    strcpy(out, one);
+    strcat(out, two);
+    return out;
+}
+
+
 struct StringBuilder {
-    private var chars: CString;
+    private var chars: Ptr[Char];
     private var length: Int;
+    private var allocated: Int;
 
 
-    public static function new() {
+    public static function new(): StringBuilder {
         return struct Self {
-            chars: "",
-            length: 10
+            chars: *(malloc(20*sizeof(Char))): Ptr[Char],
+            length: 0,
+            allocated: 20
         };
+    }
+
+
+    public static function new_from_string(initialize: CString): StringBuilder {
+        var initSize: Int = 20;
+        if initialize.length > (initSize * 2) {
+            initSize = initialize.length;
+        }
+        var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
+        strcpy(initChars, initialize);
+        return struct Self {
+            chars: initChars,
+            length: initialize.length,
+            allocated: initSize
+        };
+    }
+
+    public function get_len(): Void {
+        printf("length: %d\n", this.length);
+        printf("allocated: %d\n", this.allocated);
+    }
+
+    public function to_string(): CString {
+        var out: CString = malloc((this.length + 1) * sizeof(CString));
+        strcpy(out, this.chars);
+        return out;
+    }
+
+    public function append_string(append: CString): Void {
+        this.ensure_space(append.length);
+        strcat(this.chars, append);
+    }
+
+    public function ensure_space(add_len: Int): Void {
+        printf("Begin\n");
+        if add_len == 0 {
+            return;
+        }
+        printf("After first if\n");
+        if (this.allocated >= this.length + add_len + 1) {
+            return;
+        }
+        var stopIter = 0;
+        printf("After second if\n");
+        printf("While begin\n");
+        while (this.allocated < this.length + add_len + 1) {
+            /* Doubling growth strategy. */
+            printf("begin %d < %d + %d\n", this.allocated, this.length, add_len);
+            this.allocated <<= 1;
+            if (this.allocated == 0) {
+                printf("if begin %d < %d + %d\n", this.allocated, this.length, add_len);
+                /* Left shift of max bits will go to 0. An unsigned type set to
+                * -1 will return the maximum possible size. However, we should
+                *  have run out of memory well before we need to do this. Since
+                *  this is the theoretical maximum total system memory we don't
+                *  have a flag saying we can't grow any more because it should
+                *  be impossible to get to this point. */
+                this.allocated--;
+                printf("if end %d < %d + %d\n", this.allocated, this.length, add_len);
+            }
+            printf("if after %d < %d + %d\n", this.allocated, this.length, add_len);
+            if stopIter >= 150 {
+                break;
+            }
+            stopIter++;
+        }
+        printf("After while\n");
+        this.chars = realloc(this.chars, this.allocated);
+        printf("After realloc\n");
+        this.allocated = this.allocated + add_len;
+        printf("After length re-set\n");
     }
 }
 
-function main() {
-    var builder = StringBuilder.new();
+function main(): Void {
+    var builder = StringBuilder.new_from_string("hello world!");
+    builder.get_len();
+    // builder.ensure_space(20: Int);
+    // builder.get_len();
+    builder.append_string(" fooooooooooooooooooooooooooo");
+    builder.get_len();
+    printf("%s", builder.to_string());
 }
