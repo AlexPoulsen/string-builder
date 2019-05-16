@@ -4,6 +4,9 @@
  * @author Alex Poulsen
  */
 
+import xs_Rounding;
+include "math.h";
+
 /**
  * Not necessarily needed for the StringBuilder, but it's a useful function that works well for appending strings in a situation where a StringBuilder is not necessary
  */
@@ -32,14 +35,35 @@ struct StringBuilder {
 
     public static function newFromString(initialize: CString): StringBuilder {
         var initSize: Int = 20;
-        if initialize.length > (initSize * 2) {
+        if initialize.length > initSize {
             initSize = initialize.length;
         }
+        initSize *= 2;
         var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
         strcpy(initChars, initialize);
         return struct Self {
             chars: initChars,
             length: initialize.length,
+            allocated: initSize
+        };
+    }
+
+
+    public static function newFromInt(initialize: Int): StringBuilder {
+        var numSize: Int = xs_CeilToInt(log10(initialize: Float64));  // for numbers like 1000000000, it will report the length as one less than it is. this is fixed by multiplying the initSize by 2.
+        printf("numSize: %d\n", numSize);
+        printf("log10: %f\n", log10(initialize: Float64));
+        printf("initialize: %d\n", initialize);
+        var initSize: Int = 20;
+        if numSize > initSize {
+            initSize = numSize;
+        }
+        initSize *= 2;
+        var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
+        sprintf(initChars,"%d", initialize);
+        return struct Self {
+            chars: initChars,
+            length: numSize,
             allocated: initSize
         };
     }
@@ -58,6 +82,14 @@ struct StringBuilder {
     public function appendString(append: CString): Void {
         this.ensureSpace(append.length);
         strcat(this.chars, append);
+    }
+
+    public function appendInt(append: Int): Void {
+        var numSize: Int = xs_CeilToInt(log10(append: Float64)) + 1;  // for numbers like 1000000000, log10 will report the length as one less than it is.
+        var initChars: Ptr[Char] = *(malloc(numSize*sizeof(Char))): Ptr[Char];
+        sprintf(initChars,"%d", append);
+        this.ensureSpace(numSize+1);
+        strcat(this.chars, initChars);
     }
 
     public function ensureSpace(addLen: Int): Void {
@@ -102,11 +134,15 @@ struct StringBuilder {
 }
 
 function main(): Void {
-    var builder = StringBuilder.newFromString("hello world!");
+    // var builder = StringBuilder.newFromString("hello world!");
+    var builder = StringBuilder.newFromInt(479235634);
     builder.getLen();
+    printf("%s\n", builder.toString());
+    builder.appendString(" + ");
+    builder.appendInt(63462182);
     // builder.ensureSpace(20: Int);
     // builder.getLen();
     builder.appendString(" fooooooooooooooooooooooooooo");
     builder.getLen();
-    printf("%s", builder.toString());
+    printf("%s\n", builder.toString());
 }
