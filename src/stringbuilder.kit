@@ -82,14 +82,16 @@ struct StringBuilder {
     public function appendString(append: CString): Void {
         this.ensureSpace(append.length);
         strcat(this.chars, append);
+        this.length += append.length;
     }
 
     public function appendInt(append: Int): Void {
         var numSize: Int = xs_CeilToInt(log10(append: Float64)) + 1;  // for numbers like 1000000000, log10 will report the length as one less than it is.
         var initChars: Ptr[Char] = *(malloc(numSize*sizeof(Char))): Ptr[Char];
         sprintf(initChars,"%d", append);
-        this.ensureSpace(numSize+1);
+        this.ensureSpace(numSize);
         strcat(this.chars, initChars);
+        this.length += numSize;
     }
 
     public function ensureSpace(addLen: Int): Void {
