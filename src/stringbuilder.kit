@@ -30,7 +30,7 @@ struct StringBuilder {
     }
 
 
-    public static function new_from_string(initialize: CString): StringBuilder {
+    public static function newFromString(initialize: CString): StringBuilder {
         var initSize: Int = 20;
         if initialize.length > (initSize * 2) {
             initSize = initialize.length;
@@ -44,40 +44,40 @@ struct StringBuilder {
         };
     }
 
-    public function get_len(): Void {
+    public function getLen(): Void {
         printf("length: %d\n", this.length);
         printf("allocated: %d\n", this.allocated);
     }
 
-    public function to_string(): CString {
+    public function toString(): CString {
         var out: CString = malloc((this.length + 1) * sizeof(CString));
         strcpy(out, this.chars);
         return out;
     }
 
-    public function append_string(append: CString): Void {
-        this.ensure_space(append.length);
+    public function appendString(append: CString): Void {
+        this.ensureSpace(append.length);
         strcat(this.chars, append);
     }
 
-    public function ensure_space(add_len: Int): Void {
+    public function ensureSpace(addLen: Int): Void {
         printf("Begin\n");
-        if add_len == 0 {
+        if addLen == 0 {
             return;
         }
         printf("After first if\n");
-        if (this.allocated >= this.length + add_len + 1) {
+        if (this.allocated >= this.length + addLen + 1) {
             return;
         }
         var stopIter = 0;
         printf("After second if\n");
         printf("While begin\n");
-        while (this.allocated < this.length + add_len + 1) {
+        while (this.allocated < this.length + addLen + 1) {
             /* Doubling growth strategy. */
-            printf("begin %d < %d + %d\n", this.allocated, this.length, add_len);
+            printf("begin %d < %d + %d\n", this.allocated, this.length, addLen);
             this.allocated <<= 1;
             if (this.allocated == 0) {
-                printf("if begin %d < %d + %d\n", this.allocated, this.length, add_len);
+                printf("if begin %d < %d + %d\n", this.allocated, this.length, addLen);
                 /* Left shift of max bits will go to 0. An unsigned type set to
                 * -1 will return the maximum possible size. However, we should
                 *  have run out of memory well before we need to do this. Since
@@ -85,9 +85,9 @@ struct StringBuilder {
                 *  have a flag saying we can't grow any more because it should
                 *  be impossible to get to this point. */
                 this.allocated--;
-                printf("if end %d < %d + %d\n", this.allocated, this.length, add_len);
+                printf("if end %d < %d + %d\n", this.allocated, this.length, addLen);
             }
-            printf("if after %d < %d + %d\n", this.allocated, this.length, add_len);
+            printf("if after %d < %d + %d\n", this.allocated, this.length, addLen);
             if stopIter >= 150 {
                 break;
             }
@@ -96,17 +96,17 @@ struct StringBuilder {
         printf("After while\n");
         this.chars = realloc(this.chars, this.allocated);
         printf("After realloc\n");
-        this.allocated = this.allocated + add_len;
+        this.allocated = this.allocated + addLen;
         printf("After length re-set\n");
     }
 }
 
 function main(): Void {
-    var builder = StringBuilder.new_from_string("hello world!");
-    builder.get_len();
-    // builder.ensure_space(20: Int);
-    // builder.get_len();
-    builder.append_string(" fooooooooooooooooooooooooooo");
-    builder.get_len();
-    printf("%s", builder.to_string());
+    var builder = StringBuilder.newFromString("hello world!");
+    builder.getLen();
+    // builder.ensureSpace(20: Int);
+    // builder.getLen();
+    builder.appendString(" fooooooooooooooooooooooooooo");
+    builder.getLen();
+    printf("%s", builder.toString());
 }
