@@ -25,7 +25,6 @@ struct StringBuilder {
     private var length: Int;
     private var allocated: Int;
 
-
     public static function new(): StringBuilder {
         return struct Self {
             chars: *(malloc(20*sizeof(Char))): Ptr[Char],
@@ -34,16 +33,10 @@ struct StringBuilder {
         };
     }
 
-
     public static function newFromString(initialize: CString, size: Int = 0): StringBuilder {
         var initSize: Int = _minSizePreDoubling;
-        if initialize.length > initSize {
-            initSize = initialize.length;
-        }
-        initSize *= 2;
-        if size > initSize {
-            initSize = size;
-        }
+        initSize = xs_MaxInt(initialize.length, initSize) * 2;
+        initSize = xs_MaxInt(size, initSize);
         var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
         strcpy(initChars, initialize);
         return struct Self {
@@ -53,13 +46,9 @@ struct StringBuilder {
         };
     }
 
-
     public static function newFromCharPtr(initialize: Ptr[Char], size: Int): StringBuilder {
         var initSize: Int = _minSizePreDoubling;
-        if size > initSize {
-            initSize = size;
-        }
-        initSize *= 2;
+        initSize = xs_MaxInt(size, initSize) * 2;
         var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
         strcpy(initChars, initialize);
         return struct Self {
@@ -69,16 +58,10 @@ struct StringBuilder {
         };
     }
 
-
     public static function newFromCharArray(initialize: CArray[Char], size: Int = 0): StringBuilder {
         var initSize: Int = _minSizePreDoubling;
-        if initialize.length > initSize {
-            initSize = initialize.length;
-        }
-        initSize *= 2;
-        if size > initSize {
-            initSize = size;
-        }
+        initSize = xs_MaxInt(initialize.length, initSize) * 2;
+        initSize = xs_MaxInt(size, initSize);
         var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
         strcpy(initChars, initialize);
         return struct Self {
@@ -88,22 +71,33 @@ struct StringBuilder {
         };
     }
 
-
     public static function newFromInt(initialize: Int, size: Int = 0): StringBuilder {
         var numSize: Int = xs_CeilToInt(log10(initialize: Float64));  // for numbers like 1000000000, it will report the length as one less than it is. this is fixed by multiplying the initSize by 2.
         var initSize: Int = _minSizePreDoubling;
-        if numSize > initSize {
-            initSize = numSize;
-        }
-        initSize *= 2;
-        if size > initSize {
-            initSize = size;
-        }
+        initSize = xs_MaxInt(numSize, initSize) * 2;
+        initSize = xs_MaxInt(size, initSize);
         var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
         sprintf(initChars,"%d", initialize);
         return struct Self {
             chars: initChars,
             length: numSize,
+            allocated: initSize
+        };
+    }
+
+    public static function newFromFloat(initialize: Float, size: Int = 0): StringBuilder {
+        var initializeAboveDecimal: Float64 = xs_FloorToInt(initialize);
+        var aboveDecimalSize: Int = xs_CeilToInt(log10(initializeAboveDecimal)) + 1;  // for numbers like 1000000000, it will report the length as one less than it is. this is fixed by multiplying the initSize by 2.
+        var initSize: Int = _minSizePreDoubling;
+        size = xs_MaxInt(aboveDecimalSize, size);
+        initSize = (xs_MaxInt(size + 1, initSize) * 2) + 2;
+        var initChars: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
+        printf("[%d]\n", size - aboveDecimalSize - 1);
+        printf("[%d]\n", xs_MaxInt(size - aboveDecimalSize - 1, aboveDecimalSize));
+        sprintf(initChars, "%.*f", xs_MaxInt(size - aboveDecimalSize - 1, aboveDecimalSize), initialize);
+        return struct Self {
+            chars: initChars,
+            length: size,
             allocated: initSize
         };
     }
@@ -176,16 +170,19 @@ struct StringBuilder {
 }
 
 function main(): Void {
-    // var builder = StringBuilder.newFromString("hello world!");
-    // var builder = StringBuilder.newFromInt(479235634);
-    var cp: Ptr[Char] = "abc 123";
-    var ca: CArray[Char, 7];
-    strcpy(ca, "lol hi");
-    // var builder = StringBuilder.newFromCharPtr(cp, 7);
-    var builder = StringBuilder.newFromCharArray(ca);
-    builder.appendString(" + ");
-    builder.appendInt(63462182);
-    builder.appendString(" fooooooooooooooooooooooooooo");
-    printf("%s\n", builder.toString());
-    builder.printLengthAndAllocated();
+    for n in 0 ... 14 {
+        // var builder = StringBuilder.newFromString("hello world!");
+        // var builder = StringBuilder.newFromInt(479235634);
+        var builder = StringBuilder.newFromFloat(2385.2463573_f64, n);
+        var cp: Ptr[Char] = "abc 123";
+        var ca: CArray[Char, 7];
+        strcpy(ca, "lol hi");
+        // var builder = StringBuilder.newFromCharPtr(cp, 7);
+        // var builder = StringBuilder.newFromCharArray(ca);
+        builder.appendString(" + ");
+        builder.appendInt(63462182);
+        builder.appendString(" fooooooooooooooooooooooooooo");
+        printf("%s\n", builder.toString());
+        builder.printLengthAndAllocated();
+    }
 }
