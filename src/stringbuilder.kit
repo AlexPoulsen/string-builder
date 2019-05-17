@@ -85,24 +85,21 @@ struct StringBuilder {
         };
     }
 
-    public static function newFromFloat(initialize: Float, size: Int = 0): StringBuilder {
-        // printf("<%d>\n", size);
-        var cacheSize: Int = size;
+    public static function newFromFloat(initialize: Float, size: Int = -1): StringBuilder {
         var initializeAboveDecimal: Float64 = xs_FloorToInt(initialize);
         var aboveDecimalSize: Int = xs_CeilToInt(log10(initializeAboveDecimal)) + 1;  // for numbers like 1000000000, it will report the length as one less than it is. this is fixed by multiplying the initSize by 2.
+        if size == -1 {
+            size = aboveDecimalSize;
+        }
+        var cacheSize: Int = size;
         var initSize: Int = _minSizePreDoubling;
         size = xs_MaxInt(aboveDecimalSize, size);
         initSize = (xs_MaxInt(size + 1, initSize) * 2) + 2;
         var initChars: Ptr[Char] = *(malloc((cacheSize * 2 + 1)*sizeof(Char))): Ptr[Char];
         var initCharsTemp: Ptr[Char] = *(malloc(initSize*sizeof(Char))): Ptr[Char];
-        // printf("[%d]\n", size - aboveDecimalSize - 1);
-        // printf("[%d]\n", xs_MaxInt(size - aboveDecimalSize - 1, aboveDecimalSize));
-        // printf("[%d]\n", cacheSize);
         sprintf(initCharsTemp, "%.*f", xs_MaxInt(size - aboveDecimalSize - 1, aboveDecimalSize), initialize);
-        // printf("[)%s(]\n", initCharsTemp);
         strncpy(initChars, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", (cacheSize * 2 + 1));
         strncpy(initChars, initCharsTemp, xs_MaxInt(cacheSize - 1, 1));
-        // printf("[)%s(]\n", initChars);
         return struct Self {
             chars: initChars,
             length: xs_MaxInt(cacheSize, 1),
@@ -127,13 +124,47 @@ struct StringBuilder {
         this.length += append.length;
     }
 
+    public function appendCharPtr(append: Ptr[Char], size: Int): Void {
+        this.ensureSpace(size);
+        strncat(this.chars, append, size);
+        this.length += size;
+    }
+
+    public function appendCharArray(append: CArray[Char]): Void {
+        this.ensureSpace(append.length);
+        strcat(this.chars, append);
+        this.length += append.length;
+    }
+
     public function appendInt(append: Int): Void {
         var numSize: Int = xs_CeilToInt(log10(append: Float64)) + 1;  // for numbers like 1000000000, log10 will report the length as one less than it is.
-        var initChars: Ptr[Char] = *(malloc(numSize*sizeof(Char))): Ptr[Char];
-        sprintf(initChars,"%d", append);
+        var appendChars: Ptr[Char] = *(malloc(numSize*sizeof(Char))): Ptr[Char];
+        sprintf(appendChars,"%d", append);
         this.ensureSpace(numSize);
-        strcat(this.chars, initChars);
+        strcat(this.chars, appendChars);
         this.length += numSize;
+    }
+
+    public function appendFloat(append: Float, size: Int = -1): Void {
+        var appendAboveDecimal: Float64 = xs_FloorToInt(append);
+        var aboveDecimalSize: Int = xs_CeilToInt(log10(appendAboveDecimal)) + 1;  // for numbers like 1000000000, it will report the length as one less than it is. this is fixed by multiplying the initSize by 2.
+        if size < 0 {
+            size = aboveDecimalSize;
+        } else {
+            size += 1;
+        }
+        var cacheSize: Int = size;
+        var appendSize: Int = _minSizePreDoubling;
+        size = xs_MaxInt(aboveDecimalSize, size);
+        appendSize = (xs_MaxInt(size + 1, appendSize) * 2) + 2;
+        var appendChars: Ptr[Char] = *(malloc((cacheSize * 2 + 1)*sizeof(Char))): Ptr[Char];
+        var appendCharsTemp: Ptr[Char] = *(malloc(appendSize*sizeof(Char))): Ptr[Char];
+        sprintf(appendCharsTemp, "%.*f", xs_MaxInt(size - aboveDecimalSize - 1, aboveDecimalSize), append);
+        strncpy(appendChars, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", (cacheSize * 2 + 1));
+        strncpy(appendChars, appendCharsTemp, xs_MaxInt(cacheSize - 1, 1));
+        this.ensureSpace(xs_MaxInt(cacheSize, 1));
+        strcat(this.chars, appendChars);
+        this.length += xs_MaxInt(cacheSize, 1);
     }
 
     public function ensureSpace(addLen: Int): Void {
@@ -178,22 +209,21 @@ struct StringBuilder {
 }
 
 function main(): Void {
-    for n in 0 ... 20 {
-        // printf("{%d}\n", n);
-        // var builder = StringBuilder.newFromString("hello world!");
-        // var builder = StringBuilder.newFromInt(479235634);
-        var builder = StringBuilder.newFromFloat(2385.2463573_f64, n);
-        builder.printLengthAndAllocated();
-        // var cp: Ptr[Char] = "abc 123";
-        // var ca: CArray[Char, 7];
-        // strcpy(ca, "lol hi");
-        // var builder = StringBuilder.newFromCharPtr(cp, 7);
-        // var builder = StringBuilder.newFromCharArray(ca);
-        // builder.ensureSpace(32);
-        builder.appendString(" -");
-        // builder.appendInt(n);
-        builder.appendString("- fooooooooooooooooooooooooooo");
-        printf("%s\n", builder.toString());
-        builder.printLengthAndAllocated();
-    }
+    checkEndianness();
+    var builder = StringBuilder.newFromString("hello world!");
+    // var builder = StringBuilder.newFromInt(479235634);
+    // var builder = StringBuilder.newFromFloat(2385.2463573_f64, n);
+    builder.printLengthAndAllocated();
+    var cp: Ptr[Char] = "abc 123";
+    var ca: CArray[Char, 7];
+    strcpy(ca, "lol hi");
+    builder.appendCharPtr(cp, 7);
+    builder.appendCharArray(ca);
+    builder.appendFloat(1.5326, 6);
+    // builder.ensureSpace(32);
+    builder.appendString(" -");
+    builder.appendInt(426);
+    builder.appendString("- fooooooooooooooooooooooooooo");
+    printf("%s\n", builder.toString());
+    builder.printLengthAndAllocated();
 }

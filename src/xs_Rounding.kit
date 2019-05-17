@@ -100,11 +100,3 @@ static function xs_CeilToInt(val: Float64, dme: Float64 = xs_doublemagicroundeps
 inline function xs_RoundToInt(val: Float64): Int32 {
     return xs_CRoundToInt(val + xs_doublemagicdelta);
 }
-
-
-function main() {
-    checkEndianness();
-    printf("%s\n", endiannessString());
-    printf("%d\n", xs_CeilToInt(12.4309580239));
-    printf("%d\n", xs_FloorToInt(12.4309580239));
-}
