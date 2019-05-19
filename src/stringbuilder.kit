@@ -263,8 +263,8 @@ struct StringBuilder {
         this.appendString(if initialize then t else f);
     }
 
-    public static function appendFromCopy(initialize: StringBuilder): Void {
-        this.appendCharPtr(initialize.chars, initialize.length)
+    public function appendFromCopy(initialize: StringBuilder): Void {
+        this.appendCharPtr(initialize.chars, initialize.length);
     }
 
 
