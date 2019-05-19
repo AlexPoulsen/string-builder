@@ -53,6 +53,16 @@ struct StringBuilder {
         };
     }
 
+    public static function newFromCopy(initialize: StringBuilder): StringBuilder {
+        var newChars: Ptr[Char] = *(malloc(initialize.allocated*sizeof(Char))): Ptr[Char];
+        strcpy(newChars, initialize.chars);
+        return struct Self {
+            chars: newChars,
+            length: initialize.length,
+            allocated: initialize.allocated
+        };
+    }
+
     public static function newFromString(initialize: CString, size: Int = 0): StringBuilder {
         var initSize: Int = _minSizePreDoubling;
         initSize = xs_MaxInt(initialize.length, initSize) * 2;
@@ -251,6 +261,10 @@ struct StringBuilder {
                             }}
         }
         this.appendString(if initialize then t else f);
+    }
+
+    public static function appendFromCopy(initialize: StringBuilder): Void {
+        this.appendCharPtr(initialize.chars, initialize.length)
     }
 
 
