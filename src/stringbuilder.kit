@@ -38,11 +38,12 @@ struct StringBuilder {
     private var length: Int;
     private var allocated: Int;
 
-    public static function new(): StringBuilder {
+    public static function new(size: Int = 0): StringBuilder {
+        size = xs_MaxInt(size, _minSizePreDoubling * 2);
         return struct Self {
             chars: *(malloc(20*sizeof(Char))): Ptr[Char],
             length: 0,
-            allocated: 20
+            allocated: size
         };
     }
 
