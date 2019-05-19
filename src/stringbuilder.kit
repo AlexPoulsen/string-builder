@@ -38,6 +38,12 @@ struct StringBuilder {
     private var length: Int;
     private var allocated: Int;
 
+
+    // =========================================================================
+    // creation functions
+    // =========================================================================
+
+
     public static function new(size: Int = 0): StringBuilder {
         size = xs_MaxInt(size, _minSizePreDoubling * 2);
         return struct Self {
@@ -149,6 +155,11 @@ struct StringBuilder {
     }
 
 
+    // =========================================================================
+    // output functions
+    // =========================================================================
+
+
     public function printLengthAndAllocated(): Void {
         printf("length: %d\n", this.length);
         printf("allocated: %d\n", this.allocated);
@@ -159,6 +170,11 @@ struct StringBuilder {
         strcpy(out, this.chars);
         return out;
     }
+
+
+    // =========================================================================
+    // append functions
+    // =========================================================================
 
 
     public function appendString(append: CString): Void {
@@ -173,10 +189,10 @@ struct StringBuilder {
         this.length += size;
     }
 
-    public function appendCharArray(append: CArray[Char]): Void {
-        this.ensureSpace(append.length);
-        strcat(this.chars, append);
-        this.length += append.length;
+    public function appendCharArray(append: CArray[Char], size: Int): Void {
+        this.ensureSpace(size);
+        strncat(this.chars, append, size);
+        this.length += size;
     }
 
     public function appendInt(append: Int): Void {
@@ -209,6 +225,39 @@ struct StringBuilder {
         strcat(this.chars, appendChars);
         this.length += xs_MaxInt(cacheSize, 1);
     }
+
+    public function appendBool(initialize: Bool, mode: BoolMode = BoolMode.TRUE_FALSE, capitalization: BoolCap = BoolCap.LOWER): Void {
+        var t: CString = "-";
+        var f: CString = "-";
+        match mode {
+            TRUE_FALSE => {
+                            match capitalization {
+                                LOWER => {t = "true"; f = "false";}
+                                UPPER => {t = "TRUE"; f = "FALSE";}
+                                TITLE => {t = "True"; f = "False";}
+                            }}
+            T_F        => {
+                            match capitalization {
+                                LOWER => {t = "t"; f = "f";}
+                                UPPER => {t = "T"; f = "F";}
+                                TITLE => {t = "T"; f = "F";}
+                            }}
+            T1_F0      => {t = "1"; f = "0";}
+            ON_OFF     => {
+                            match capitalization {
+                                LOWER => {t = "on"; f = "off";}
+                                UPPER => {t = "ON"; f = "OFF";}
+                                TITLE => {t = "On"; f = "Off";}
+                            }}
+        }
+        this.appendString(if initialize then t else f);
+    }
+
+
+    // =========================================================================
+    // helper functions
+    // =========================================================================
+
 
     public function ensureSpace(addLen: Int): Void {
         // printf("Begin\n");
@@ -249,33 +298,6 @@ struct StringBuilder {
         this.allocated = this.allocated + addLen;
         // printf("After length re-set\n");
     }
-
-    public function appendBool(initialize: Bool, mode: BoolMode = BoolMode.TRUE_FALSE, capitalization: BoolCap = BoolCap.LOWER): Void {
-        var t: CString = "-";
-        var f: CString = "-";
-        match mode {
-            TRUE_FALSE => {
-                            match capitalization {
-                                LOWER => {t = "true"; f = "false";}
-                                UPPER => {t = "TRUE"; f = "FALSE";}
-                                TITLE => {t = "True"; f = "False";}
-                            }}
-            T_F        => {
-                            match capitalization {
-                                LOWER => {t = "t"; f = "f";}
-                                UPPER => {t = "T"; f = "F";}
-                                TITLE => {t = "T"; f = "F";}
-                            }}
-            T1_F0      => {t = "1"; f = "0";}
-            ON_OFF     => {
-                            match capitalization {
-                                LOWER => {t = "on"; f = "off";}
-                                UPPER => {t = "ON"; f = "OFF";}
-                                TITLE => {t = "On"; f = "Off";}
-                            }}
-        }
-        this.appendString(if initialize then t else f);
-    }
 }
 
 function main(): Void {
@@ -285,17 +307,30 @@ function main(): Void {
     // var builder = StringBuilder.newFromInt(479235634);
     // var builder = StringBuilder.newFromFloat(2385.2463573_f64, n);
     builder.printLengthAndAllocated();
+    printf("%s\n\n", builder.toString());
     var cp: Ptr[Char] = "abc 123";
     var ca: CArray[Char, 7];
     strcpy(ca, "lol hi");
     builder.appendCharPtr(cp, 7);
-    builder.appendCharArray(ca);
+    builder.printLengthAndAllocated();
+    printf("%s\n\n", builder.toString());
+    builder.appendCharArray(ca, 6);
+    builder.printLengthAndAllocated();
+    printf("%s\n\n", builder.toString());
     builder.appendFloat(1.5326, 6);
+    builder.printLengthAndAllocated();
+    printf("%s\n\n", builder.toString());
     // builder.ensureSpace(32);
     builder.appendString(" -");
-    builder.appendBool(false, BoolMode.T_F, BoolCap.UPPER);
-    builder.appendInt(426);
-    builder.appendString("- fooooooooooooooooooooooooooo");
-    printf("%s\n", builder.toString());
     builder.printLengthAndAllocated();
+    printf("%s\n\n", builder.toString());
+    builder.appendBool(false, BoolMode.T_F, BoolCap.UPPER);
+    builder.printLengthAndAllocated();
+    printf("%s\n\n", builder.toString());
+    builder.appendInt(426);
+    builder.printLengthAndAllocated();
+    printf("%s\n\n", builder.toString());
+    builder.appendString("- fooooooooooooooooooooooooooo");
+    builder.printLengthAndAllocated();
+    printf("%s\n\n", builder.toString());
 }
