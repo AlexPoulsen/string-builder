@@ -19,6 +19,19 @@ function strAdd(one: CString, two: CString) {
     return out;
 }
 
+enum BoolMode {
+    TRUE_FALSE;
+    T_F;
+    T1_F0;
+    ON_OFF;
+}
+
+enum BoolCap {
+    LOWER;
+    UPPER;
+    TITLE;
+}
+
 
 struct StringBuilder {
     private var chars: Ptr[Char];
@@ -107,6 +120,34 @@ struct StringBuilder {
         };
     }
 
+    public static function newFromBool(initialize: Bool, mode: BoolMode = BoolMode.TRUE_FALSE, capitalization: BoolCap = BoolCap.LOWER, size: Int = 10): StringBuilder {
+        var t: CString = "-";
+        var f: CString = "-";
+        match mode {
+            TRUE_FALSE => {
+                            match capitalization {
+                                LOWER => {t = "true"; f = "false";}
+                                UPPER => {t = "TRUE"; f = "FALSE";}
+                                TITLE => {t = "True"; f = "False";}
+                            }}
+            T_F        => {
+                            match capitalization {
+                                LOWER => {t = "t"; f = "f";}
+                                UPPER => {t = "T"; f = "F";}
+                                TITLE => {t = "T"; f = "F";}
+                            }}
+            T1_F0      => {t = "1"; f = "0";}
+            ON_OFF     => {
+                            match capitalization {
+                                LOWER => {t = "on"; f = "off";}
+                                UPPER => {t = "ON"; f = "OFF";}
+                                TITLE => {t = "On"; f = "Off";}
+                            }}
+        }
+        return Self.newFromString(if initialize then t else f, size);
+    }
+
+
     public function printLengthAndAllocated(): Void {
         printf("length: %d\n", this.length);
         printf("allocated: %d\n", this.allocated);
@@ -117,6 +158,7 @@ struct StringBuilder {
         strcpy(out, this.chars);
         return out;
     }
+
 
     public function appendString(append: CString): Void {
         this.ensureSpace(append.length);
@@ -206,11 +248,39 @@ struct StringBuilder {
         this.allocated = this.allocated + addLen;
         // printf("After length re-set\n");
     }
+
+    public function appendBool(initialize: Bool, mode: BoolMode = BoolMode.TRUE_FALSE, capitalization: BoolCap = BoolCap.LOWER): Void {
+        var t: CString = "-";
+        var f: CString = "-";
+        match mode {
+            TRUE_FALSE => {
+                            match capitalization {
+                                LOWER => {t = "true"; f = "false";}
+                                UPPER => {t = "TRUE"; f = "FALSE";}
+                                TITLE => {t = "True"; f = "False";}
+                            }}
+            T_F        => {
+                            match capitalization {
+                                LOWER => {t = "t"; f = "f";}
+                                UPPER => {t = "T"; f = "F";}
+                                TITLE => {t = "T"; f = "F";}
+                            }}
+            T1_F0      => {t = "1"; f = "0";}
+            ON_OFF     => {
+                            match capitalization {
+                                LOWER => {t = "on"; f = "off";}
+                                UPPER => {t = "ON"; f = "OFF";}
+                                TITLE => {t = "On"; f = "Off";}
+                            }}
+        }
+        this.appendString(if initialize then t else f);
+    }
 }
 
 function main(): Void {
     checkEndianness();
-    var builder = StringBuilder.newFromString("hello world!");
+    // var builder = StringBuilder.newFromString("hello world!");
+    var builder = StringBuilder.newFromBool(true);
     // var builder = StringBuilder.newFromInt(479235634);
     // var builder = StringBuilder.newFromFloat(2385.2463573_f64, n);
     builder.printLengthAndAllocated();
@@ -222,6 +292,7 @@ function main(): Void {
     builder.appendFloat(1.5326, 6);
     // builder.ensureSpace(32);
     builder.appendString(" -");
+    builder.appendBool(false, BoolMode.T_F, BoolCap.UPPER);
     builder.appendInt(426);
     builder.appendString("- fooooooooooooooooooooooooooo");
     printf("%s\n", builder.toString());
