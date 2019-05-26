@@ -166,23 +166,6 @@ struct StringBuilder {
 
 
     // =========================================================================
-    // output functions
-    // =========================================================================
-
-
-    public function printLengthAndAllocated(): Void {
-        printf("length: %d\n", this.length);
-        printf("allocated: %d\n", this.allocated);
-    }
-
-    public function toString(): CString {
-        var out: CString = malloc((this.length + 1) * sizeof(CString));
-        strcpy(out, this.chars);
-        return out;
-    }
-
-
-    // =========================================================================
     // append functions
     // =========================================================================
 
@@ -269,6 +252,102 @@ struct StringBuilder {
 
 
     // =========================================================================
+    // output functions
+    // =========================================================================
+
+
+    public function printLengthAndAllocated(): Void {
+        printf("length: %d\n", this.length);
+        printf("allocated: %d\n", this.allocated);
+    }
+
+    public function toString(): CString {
+        var out: CString = malloc((this.length + 1) * sizeof(CString));
+        strcpy(out, this.chars);
+        return out;
+    }
+
+    public function returnWithString(append: CString): CString {
+        var out: CString = malloc((this.length + append.length + 1) * sizeof(CString));
+        strcpy(out, this.chars);
+        strcat(out, append);
+        return out;
+    }
+
+    public function returnWithCharPtr(append: Ptr[Char], size: Int): CString {
+        var out: CString = malloc((this.length + size + 1) * sizeof(CString));
+        strcpy(out, this.chars);
+        strncat(out, append, size);
+        return out;
+    }
+
+    public function returnWithCharArray(append: CArray[Char], size: Int): CString {
+        var out: CString = malloc((this.length + size + 1) * sizeof(CString));
+        strcpy(out, this.chars);
+        strncat(out, append, size);
+        return out;
+    }
+
+    public function returnWithInt(append: Int): CString {
+        var numSize: Int = xs_CeilToInt(log10(append: Float64)) + 1;  // for numbers like 1000000000, log10 will report the length as one less than it is.
+        var appendChars: Ptr[Char] = *(malloc(numSize * sizeof(Char))): Ptr[Char];
+        sprintf(appendChars,"%d", append);
+        return this.returnWithString(appendChars);
+    }
+
+    public function returnWithFloat(append: Float, size: Int = -1): CString {
+        var appendAboveDecimal: Float64 = xs_FloorToInt(append);
+        var aboveDecimalSize: Int = xs_CeilToInt(log10(appendAboveDecimal)) + 1;  // for numbers like 1000000000, it will report the length as one less than it is. this is fixed by multiplying the initSize by 2.
+        if size < 0 {
+            size = aboveDecimalSize;
+        } else {
+            size += 1;
+        }
+        var cacheSize: Int = size;
+        var appendSize: Int = _minSizePreDoubling;
+        size = xs_MaxInt(aboveDecimalSize, size);
+        appendSize = (xs_MaxInt(size + 1, appendSize) * 2) + 2;
+        var appendChars: Ptr[Char] = *(malloc((cacheSize * 2 + 1) * sizeof(Char))): Ptr[Char];
+        var appendCharsTemp: Ptr[Char] = *(malloc(appendSize * sizeof(Char))): Ptr[Char];
+        sprintf(appendCharsTemp, "%.*f", xs_MaxInt(size - aboveDecimalSize - 1, aboveDecimalSize), append);
+        strncpy(appendChars, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", (cacheSize * 2 + 1));
+        strncpy(appendChars, appendCharsTemp, xs_MaxInt(cacheSize - 1, 1));
+        return this.returnWithString(appendChars);
+    }
+
+    public function returnWithBool(initialize: Bool, mode: BoolMode = BoolMode.TRUE_FALSE, capitalization: BoolCap = BoolCap.LOWER): CString {
+        var t: CString = "-";
+        var f: CString = "-";
+        match mode {
+            TRUE_FALSE => {
+                            match capitalization {
+                                LOWER => {t = "true"; f = "false";}
+                                UPPER => {t = "TRUE"; f = "FALSE";}
+                                TITLE => {t = "True"; f = "False";}
+                            }}
+            T_F        => {
+                            match capitalization {
+                                LOWER => {t = "t"; f = "f";}
+                                UPPER => {t = "T"; f = "F";}
+                                TITLE => {t = "T"; f = "F";}
+                            }}
+            T1_F0      => {t = "1"; f = "0";}
+            ON_OFF     => {
+                            match capitalization {
+                                LOWER => {t = "on"; f = "off";}
+                                UPPER => {t = "ON"; f = "OFF";}
+                                TITLE => {t = "On"; f = "Off";}
+                            }}
+        }
+        return this.returnWithString(if initialize then t else f);
+    }
+
+    public function returnWithCopy(initialize: StringBuilder): CString {
+        return this.returnWithCharPtr(initialize.chars, initialize.length);
+    }
+
+
+    // =========================================================================
     // helper functions
     // =========================================================================
 
@@ -347,4 +426,12 @@ function main(): Void {
     builder.appendString("- fooooooooooooooooooooooooooo");
     builder.printLengthAndAllocated();
     printf("%s\n\n", builder.toString());
+    printf("%s\n\n", builder.returnWithString("5"));
+    printf("%s\n\n", builder.returnWithCharPtr(cp, 7));
+    printf("%s\n\n", builder.returnWithCharArray(ca, 6));
+    printf("%s\n\n", builder.returnWithInt(5));
+    printf("%s\n\n", builder.returnWithFloat(42.261, 6));
+    printf("%s\n\n", builder.returnWithBool(true));
+    printf("%s\n\n", builder.returnWithBool(false));
+    printf("%s\n\n", builder.returnWithCopy(builder));
 }

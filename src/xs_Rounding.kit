@@ -29,7 +29,7 @@ function checkEndianness(): Void {
         endianness = Endianness.BIG;
     }
     match endianness {
-        LITTLE => { //intel is little endian
+        LITTLE => {  //intel is little endian
             xs_iexp = 1;
             xs_iman = 0;
         }
