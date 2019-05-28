@@ -12,7 +12,7 @@ var _minSizePreDoubling: Int = 10;
 /**
  * Not necessarily needed for the StringBuilder, but it's a useful function that works well for appending strings in a situation where a StringBuilder is not necessary
  */
-function strAdd(one: CString, two: CString) {
+function strAdd(one: CString, two: CString): CString {
     var out = malloc(one.length + two.length + 1);
     strcpy(out, one);
     strcat(out, two);
