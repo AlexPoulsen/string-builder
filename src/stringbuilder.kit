@@ -353,23 +353,17 @@ struct StringBuilder {
 
 
     public function ensureSpace(addLen: Int): Void {
-        // printf("Begin\n");
         if addLen == 0 {
             return;
         }
-        // printf("After first if\n");
         if (this.allocated >= this.length + addLen + 1) {
             return;
         }
         var stopIter = 0;
-        // printf("After second if\n");
-        // printf("While begin\n");
         while (this.allocated < this.length + addLen + 1) {
             /* Doubling growth strategy. */
-            // printf("begin %d < %d + %d\n", this.allocated, this.length, addLen);
             this.allocated <<= 1;
             if (this.allocated == 0) {
-                // printf("if begin %d < %d + %d\n", this.allocated, this.length, addLen);
                 /* Left shift of max bits will go to 0. An unsigned type set to
                 * -1 will return the maximum possible size. However, we should
                 *  have run out of memory well before we need to do this. Since
@@ -377,19 +371,14 @@ struct StringBuilder {
                 *  have a flag saying we can't grow any more because it should
                 *  be impossible to get to this point. */
                 this.allocated--;
-                // printf("if end %d < %d + %d\n", this.allocated, this.length, addLen);
             }
-            // printf("if after %d < %d + %d\n", this.allocated, this.length, addLen);
             if stopIter >= 150 {
                 break;
             }
             stopIter++;
         }
-        // printf("After while\n");
         this.chars = realloc(this.chars, this.allocated);
-        // printf("After realloc\n");
         this.allocated = this.allocated + addLen;
-        // printf("After length re-set\n");
     }
 }
 
