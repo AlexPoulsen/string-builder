@@ -284,6 +284,16 @@ struct StringBuilder {
         return out;
     }
 
+    public function makeCopy(): StringBuilder {
+        var copyChars: Ptr[Char] = *(malloc(this.allocated * sizeof(Char))): Ptr[Char];
+        strcpy(copyChars, this.chars);
+        return struct Self {
+            chars: copyChars,
+            length: this.length,
+            allocated: this.allocated
+        };
+    }
+
     public function returnWithString(append: CString): CString {
         var out: CString = malloc((this.length + append.length + 1) * sizeof(CString));
         strcpy(out, this.chars);
