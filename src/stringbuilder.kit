@@ -181,34 +181,38 @@ struct StringBuilder {
     // =========================================================================
 
 
-    public function appendString(append: CString): Void {
+    public function appendString(append: CString): StringBuilder {
         this.ensureSpace(append.length);
         strcat(this.chars, append);
         this.length += append.length;
+        return this;
     }
 
-    public function appendCharPtr(append: Ptr[Char], size: Int): Void {
+    public function appendCharPtr(append: Ptr[Char], size: Int): StringBuilder {
         this.ensureSpace(size);
         strncat(this.chars, append, size);
         this.length += size;
+        return this;
     }
 
-    public function appendCharArray(append: CArray[Char], size: Int): Void {
+    public function appendCharArray(append: CArray[Char], size: Int): StringBuilder {
         this.ensureSpace(size);
         strncat(this.chars, append, size);
         this.length += size;
+        return this;
     }
 
-    public function appendInt(append: Int): Void {
+    public function appendInt(append: Int): StringBuilder {
         var numSize: Int = xs_CeilToInt(log10(append: Float64)) + 1;  // for numbers like 1000000000, log10 will report the length as one less than it is.
         var appendChars: Ptr[Char] = *(malloc(numSize * sizeof(Char))): Ptr[Char];
         sprintf(appendChars,"%d", append);
         this.ensureSpace(numSize);
         strcat(this.chars, appendChars);
         this.length += numSize;
+        return this;
     }
 
-    public function appendFloat(append: Float, size: Int = -1): Void {
+    public function appendFloat(append: Float, size: Int = -1): StringBuilder {
         var appendAboveDecimal: Float64 = xs_FloorToInt(append);
         var aboveDecimalSize: Int = xs_CeilToInt(log10(appendAboveDecimal)) + 1;  // for numbers like 1000000000, it will report the length as one less than it is. this is fixed by multiplying the initSize by 2.
         if size < 0 {
@@ -229,9 +233,10 @@ struct StringBuilder {
         this.ensureSpace(xs_MaxInt(cacheSize, 1));
         strcat(this.chars, appendChars);
         this.length += xs_MaxInt(cacheSize, 1);
+        return this;
     }
 
-    public function appendBool(initialize: Bool, mode: BoolMode = BoolMode.TRUE_FALSE, capitalization: BoolCap = BoolCap.LOWER): Void {
+    public function appendBool(initialize: Bool, mode: BoolMode = BoolMode.TRUE_FALSE, capitalization: BoolCap = BoolCap.LOWER): StringBuilder {
         var t: CString = "-";
         var f: CString = "-";
         match mode {
@@ -255,11 +260,11 @@ struct StringBuilder {
                                 TITLE => {t = "On"; f = "Off";}
                             }}
         }
-        this.appendString(if initialize then t else f);
+        return this.appendString(if initialize then t else f);
     }
 
-    public function appendFromCopy(initialize: StringBuilder): Void {
-        this.appendCharPtr(initialize.chars, initialize.length);
+    public function appendFromCopy(initialize: StringBuilder): StringBuilder {
+        return this.appendCharPtr(initialize.chars, initialize.length);
     }
 
 
@@ -462,7 +467,7 @@ function main(): Void {
     printf("%s\n", builder.toString());
     printf("%s\n", if builder.endsWith(c'o') then "true" else "false");
     printf("%s\n\n", if builder.endsWith(c'p') then "true" else "false");
-    builder.appendInt(426);
+    builder.appendInt(426).appendString(" blah");
     builder.printLengthAndAllocated();
     printf("%s\n", builder.toString());
     // printf("%s\n\n", builder.returnWithString("5"));
