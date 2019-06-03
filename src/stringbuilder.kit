@@ -380,6 +380,34 @@ struct StringBuilder {
         this.chars = realloc(this.chars, this.allocated);
         this.allocated = this.allocated + addLen;
     }
+
+
+    // =========================================================================
+    // other functions
+    // =========================================================================
+
+
+    public function endsWith(c: Char) {
+        var offset: Int = 0;
+        var hasPreceedingNull: Bool = false;
+        // printf("[");
+        for n in 0 ... this.length {
+            var checkChar: Char = this.chars[this.length - n];
+            // printf("(%c %d) ", checkChar, checkChar);
+            if (checkChar == "\x00"[0]) {
+                hasPreceedingNull = true;
+            }
+            if (checkChar != "\x00"[0]) {
+                offset = n;
+                if hasPreceedingNull {
+                    break;
+                }
+            }
+        }
+        // printf("]\n");
+        // printf("(%c == %c) ", this.chars[this.length - offset], c);
+        return this.chars[this.length - offset] == c;
+    }
 }
 
 function main(): Void {
@@ -389,38 +417,54 @@ function main(): Void {
     // var builder = StringBuilder.newFromInt(479235634);
     // var builder = StringBuilder.newFromFloat(2385.2463573_f64, n);
     builder.printLengthAndAllocated();
-    printf("%s\n\n", builder.toString());
+    printf("%s\n", builder.toString());
     var cp: Ptr[Char] = "abc 123";
     var ca: CArray[Char, 7];
     strcpy(ca, "lol hi");
+    printf("%s\n", if builder.endsWith(c'o') then "true" else "false");
+    printf("%s\n\n", if builder.endsWith(c'p') then "true" else "false");
     builder.appendCharPtr(cp, 7);
     builder.printLengthAndAllocated();
-    printf("%s\n\n", builder.toString());
+    printf("%s\n", builder.toString());
+    printf("%s\n", if builder.endsWith(c'o') then "true" else "false");
+    printf("%s\n\n", if builder.endsWith(c'p') then "true" else "false");
     builder.appendCharArray(ca, 6);
     builder.printLengthAndAllocated();
-    printf("%s\n\n", builder.toString());
+    printf("%s\n", builder.toString());
+    printf("%s\n", if builder.endsWith(c'o') then "true" else "false");
+    printf("%s\n\n", if builder.endsWith(c'p') then "true" else "false");
     builder.appendFloat(1.5326, 6);
     builder.printLengthAndAllocated();
-    printf("%s\n\n", builder.toString());
+    printf("%s\n", builder.toString());
     // builder.ensureSpace(32);
+    printf("%s\n", if builder.endsWith(c'o') then "true" else "false");
+    printf("%s\n\n", if builder.endsWith(c'p') then "true" else "false");
     builder.appendString(" -");
     builder.printLengthAndAllocated();
-    printf("%s\n\n", builder.toString());
+    printf("%s\n", builder.toString());
+    printf("%s\n", if builder.endsWith(c'o') then "true" else "false");
+    printf("%s\n\n", if builder.endsWith(c'p') then "true" else "false");
     builder.appendBool(false, BoolMode.T_F, BoolCap.UPPER);
     builder.printLengthAndAllocated();
-    printf("%s\n\n", builder.toString());
+    printf("%s\n", builder.toString());
+    printf("%s\n", if builder.endsWith(c'o') then "true" else "false");
+    printf("%s\n\n", if builder.endsWith(c'p') then "true" else "false");
     builder.appendInt(426);
     builder.printLengthAndAllocated();
-    printf("%s\n\n", builder.toString());
+    printf("%s\n", builder.toString());
+    // printf("%s\n\n", builder.returnWithString("5"));
+    // printf("%s\n\n", builder.returnWithCharPtr(cp, 7));
+    // printf("%s\n\n", builder.returnWithCharArray(ca, 6));
+    // printf("%s\n\n", builder.returnWithInt(5));
+    // printf("%s\n\n", builder.returnWithFloat(42.261, 6));
+    // printf("%s\n\n", builder.returnWithBool(true));
+    // printf("%s\n\n", builder.returnWithBool(false));
+    // printf("%s\n\n", builder.returnWithCopy(builder));
+    printf("%s\n", if builder.endsWith(c'o') then "true" else "false");
+    printf("%s\n\n", if builder.endsWith(c'p') then "true" else "false");
     builder.appendString("- fooooooooooooooooooooooooooo");
     builder.printLengthAndAllocated();
-    printf("%s\n\n", builder.toString());
-    printf("%s\n\n", builder.returnWithString("5"));
-    printf("%s\n\n", builder.returnWithCharPtr(cp, 7));
-    printf("%s\n\n", builder.returnWithCharArray(ca, 6));
-    printf("%s\n\n", builder.returnWithInt(5));
-    printf("%s\n\n", builder.returnWithFloat(42.261, 6));
-    printf("%s\n\n", builder.returnWithBool(true));
-    printf("%s\n\n", builder.returnWithBool(false));
-    printf("%s\n\n", builder.returnWithCopy(builder));
+    printf("%s\n", builder.toString());
+    printf("%s\n", if builder.endsWith(c'o') then "true" else "false");
+    printf("%s\n\n", if builder.endsWith(c'p') then "true" else "false");
 }
