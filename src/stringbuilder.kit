@@ -19,6 +19,16 @@ function strAdd(one: CString, two: CString): CString {
     return out;
 }
 
+function repeatChar(what: Char, times: Int) {
+    var out: Ptr[Char] = *(malloc(times)): Ptr[Char];
+    for n in 0 ... times {
+        strncat(out, what, 1);
+    }
+    return out;
+    // printf("\"%s\"", out);
+}
+
+
 enum BoolMode {
     TRUE_FALSE;
     T_F;
@@ -129,6 +139,7 @@ struct StringBuilder {
         var initCharsTemp: Ptr[Char] = *(malloc(initSize * sizeof(Char))): Ptr[Char];
         sprintf(initCharsTemp, "%.*f", xs_MaxInt(size - aboveDecimalSize - 1, aboveDecimalSize), initialize);
         strncpy(initChars, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", (cacheSize * 2 + 1));
+        // strncpy(initChars, repeatChar("\x00"[0], 100), (cacheSize * 2 + 1));
         strncpy(initChars, initCharsTemp, xs_MaxInt(cacheSize - 1, 1));
         return struct Self {
             chars: initChars,
@@ -213,6 +224,7 @@ struct StringBuilder {
         var appendCharsTemp: Ptr[Char] = *(malloc(appendSize * sizeof(Char))): Ptr[Char];
         sprintf(appendCharsTemp, "%.*f", xs_MaxInt(size - aboveDecimalSize - 1, aboveDecimalSize), append);
         strncpy(appendChars, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", (cacheSize * 2 + 1));
+        // strncpy(appendChars, repeatChar("\x00"[0], 100), (cacheSize * 2 + 1));
         strncpy(appendChars, appendCharsTemp, xs_MaxInt(cacheSize - 1, 1));
         this.ensureSpace(xs_MaxInt(cacheSize, 1));
         strcat(this.chars, appendChars);
@@ -311,6 +323,7 @@ struct StringBuilder {
         var appendCharsTemp: Ptr[Char] = *(malloc(appendSize * sizeof(Char))): Ptr[Char];
         sprintf(appendCharsTemp, "%.*f", xs_MaxInt(size - aboveDecimalSize - 1, aboveDecimalSize), append);
         strncpy(appendChars, "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", (cacheSize * 2 + 1));
+        // strncpy(appendChars, repeatChar("\x00"[0], 100), (cacheSize * 2 + 1));
         strncpy(appendChars, appendCharsTemp, xs_MaxInt(cacheSize - 1, 1));
         return this.returnWithString(appendChars);
     }
