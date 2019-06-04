@@ -280,7 +280,8 @@ struct StringBuilder {
 
     public function toString(): CString {
         var out: CString = malloc((this.length + 1) * sizeof(CString));
-        strcpy(out, this.chars);
+        strncpy(out, this.chars, this.length);
+        strncat(out, "\x00"[0], 1);
         return out;
     }
 
