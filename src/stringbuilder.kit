@@ -264,7 +264,9 @@ struct StringBuilder {
     }
 
     public function appendFromCopy(initialize: StringBuilder): StringBuilder {
-        return this.appendCharPtr(initialize.chars, initialize.length);
+        var copyChars: Ptr[Char] = *(mallocator.calloc(this.allocated * sizeof(Char))): Ptr[Char];
+        strncpy(copyChars, initialize.chars, initialize.length);
+        return this.appendCharPtr(copyChars, initialize.length);
     }
 
 
@@ -372,7 +374,9 @@ struct StringBuilder {
     }
 
     public function returnWithCopy(initialize: StringBuilder): CString {
-        return this.returnWithCharPtr(initialize.chars, initialize.length);
+        var copyChars: Ptr[Char] = *(mallocator.calloc(this.allocated * sizeof(Char))): Ptr[Char];
+        strncpy(copyChars, initialize.chars, initialize.length);
+        return this.returnWithCharPtr(copyChars, initialize.length);
     }
 
 
@@ -496,4 +500,7 @@ function main(): Void {
     printf("%s\n", builder.toString());
     printf("%s\n", if builder.endsWith(c'o') then "true" else "false");
     printf("%s\n\n", if builder.endsWith(c'p') then "true" else "false");
+
+    var builder2 = StringBuilder.newFromString("hello world!");
+    printf("%s", StringBuilder.newFromString("foo ").appendFromCopy(builder2).appendString(" blah ").appendFromCopy(builder2).toString());
 }
